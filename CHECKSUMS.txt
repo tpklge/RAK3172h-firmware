@@ -1,0 +1,2 @@
+fd41083330e7478fca5baa3e8a5d2654  release/firmware-rak3172-2.7.26-meshclient-grove-proto-anz.bin
+9917e3ae23c2d3db8664ab90384d32160aeea76b5f140537ffe0e777e8805c8d  release/firmware-rak3172-2.7.26-meshclient-grove-proto-anz.bin
