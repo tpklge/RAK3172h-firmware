@@ -1,0 +1,57 @@
+diff --git a/src/mesh/NodeDB.cpp b/src/mesh/NodeDB.cpp
+index 8b47c10..9867ff9 100644
+--- a/src/mesh/NodeDB.cpp
++++ b/src/mesh/NodeDB.cpp
+@@ -840,6 +840,16 @@ void NodeDB::installDefaultModuleConfig()
+     moduleConfig.has_store_forward = true;
+     moduleConfig.has_telemetry = true;
+     moduleConfig.has_external_notification = true;
++#ifdef RAK3172_MESHCLIENT_GROVE
++    // Dedicated Meshtastic Client API transport for Cardputer MeshClient.
++    // Keep the primary console on UART2 and expose PROTO on UART1/Grove.
++    moduleConfig.serial.enabled = true;
++    moduleConfig.serial.rxd = PIN_SERIAL1_RX;
++    moduleConfig.serial.txd = PIN_SERIAL1_TX;
++    moduleConfig.serial.baud = meshtastic_ModuleConfig_SerialConfig_Serial_Baud_BAUD_115200;
++    moduleConfig.serial.mode = meshtastic_ModuleConfig_SerialConfig_Serial_Mode_PROTO;
++    moduleConfig.serial.timeout = 250;
++#endif
+ #if defined(PIN_BUZZER) || defined(PIN_VIBRATION) || defined(LED_NOTIFICATION) || defined(PCA_LED_NOTIFICATION) ||               \
+     defined(NEOPIXEL_STATUS_NOTIFICATION_PIN)
+     moduleConfig.external_notification.enabled = true;
+diff --git a/src/modules/Modules.cpp b/src/modules/Modules.cpp
+index 64e90c9..796d1c0 100644
+--- a/src/modules/Modules.cpp
++++ b/src/modules/Modules.cpp
+@@ -215,6 +215,17 @@ void setupModules()
+ #if (defined(ARCH_ESP32) || defined(ARCH_NRF52) || defined(ARCH_RP2040) || defined(ARCH_STM32WL)) &&                             \
+     !defined(CONFIG_IDF_TARGET_ESP32S2) && !defined(CONFIG_IDF_TARGET_ESP32C3)
+ #if !MESHTASTIC_EXCLUDE_SERIAL
++#ifdef RAK3172_MESHCLIENT_GROVE
++    // Always expose the Meshtastic client API on the RAK3172 Grove UART.
++    // This also upgrades nodes that already have a saved configuration.
++    moduleConfig.has_serial = true;
++    moduleConfig.serial.enabled = true;
++    moduleConfig.serial.rxd = PIN_SERIAL1_RX;
++    moduleConfig.serial.txd = PIN_SERIAL1_TX;
++    moduleConfig.serial.baud = meshtastic_ModuleConfig_SerialConfig_Serial_Baud_BAUD_115200;
++    moduleConfig.serial.mode = meshtastic_ModuleConfig_SerialConfig_Serial_Mode_PROTO;
++    moduleConfig.serial.timeout = 250;
++#endif
+     if (moduleConfig.has_serial && moduleConfig.serial.enabled &&
+         config.display.displaymode != meshtastic_Config_DisplayConfig_DisplayMode_COLOR) {
+         new SerialModule();
+diff --git a/variants/stm32/rak3172/platformio.ini b/variants/stm32/rak3172/platformio.ini
+index 4d96e98..4abd6d7 100644
+--- a/variants/stm32/rak3172/platformio.ini
++++ b/variants/stm32/rak3172/platformio.ini
+@@ -9,6 +9,9 @@ build_flags =
+   -DENABLE_HWSERIAL1
+   -DPIN_SERIAL1_RX=PB7
+   -DPIN_SERIAL1_TX=PB6
++  -DSERIAL_PRINT_PORT=1
++  -DRAK3172_MESHCLIENT_GROVE
++  -DUSERPREFS_CONFIG_LORA_REGION=meshtastic_Config_LoRaConfig_RegionCode_ANZ
+   -DPIN_WIRE_SDA=PA11
+   -DPIN_WIRE_SCL=PA12
+   -DMESHTASTIC_EXCLUDE_ENVIRONMENTAL_SENSOR=1
